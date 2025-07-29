@@ -1,54 +1,67 @@
 package com.example.DristiHearing.controller;
 
-
 import com.example.DristiHearing.entity.Hearing;
-import com.example.DristiHearing.repository.HearingRepository;
+import com.example.DristiHearing.service.HearingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/hearings")
+@CrossOrigin(origins = "*")
 public class HearingController {
+
     @Autowired
-    private HearingRepository hearingRepository;
+    private HearingService hearingService;
 
     @GetMapping
-    public Iterable<Hearing> getAllHearings(){
-        return hearingRepository.findAll();
+    public ResponseEntity<List<Hearing>> getAllHearings() {
+        List<Hearing> hearings = hearingService.getAllHearings();
+        return ResponseEntity.ok(hearings);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Hearing> getHearingById(@PathVariable String id){
-        Optional<Hearing> hearing = hearingRepository.findById(id);
-        return hearing.map(ResponseEntity::ok).orElseGet(() ->ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    // Get a hearing by filingNumber (ID)
+    @GetMapping("/{filingNumber}")
+    public ResponseEntity<Hearing> getHearingById(@PathVariable("filingNumber") String filingNumber) {
+        Optional<Hearing> hearing = hearingService.getHearingById(filingNumber);
+        return hearing.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    // Create a new hearing
     @PostMapping
-    public ResponseEntity<Hearing> createHearing(@RequestBody Hearing hearing){
-        Hearing saved = hearingRepository.save(hearing);
-        return  ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<Hearing> createHearing(@RequestBody Hearing hearing) {
+        Hearing saved = hearingService.createHearing(hearing);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @PutMapping
-    public ResponseEntity<Hearing>  updateHearing(@PathVariable String id, @RequestBody Hearing updateHearing){
-        if(!hearingRepository.existsById(id)){
+    // Update hearing by filingNumber
+    @PutMapping("/{filingNumber}")
+    public ResponseEntity<Hearing> updateHearing(@PathVariable("filingNumber") String filingNumber,
+                                                 @RequestBody Hearing updatedHearing) {
+        Optional<Hearing> existing = hearingService.getHearingById(filingNumber);
+        if (existing.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        updateHearing.setId(id);
-        Hearing saved = hearingRepository.save(updateHearing);
-        return ResponseEntity.ok(saved);
+
+        // Set the same ID to ensure update
+        updatedHearing.setFilingNumber(filingNumber);
+        Hearing updated = hearingService.updateHearing(filingNumber, updatedHearing);
+        return ResponseEntity.ok(updated);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteHearing(@PathVariable String id){
-        if(!hearingRepository.existsById(id)){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hearing with ID" + id + "not found");
+    // Delete hearing by filingNumber
+    @DeleteMapping("/{filingNumber}")
+    public ResponseEntity<String> deleteHearing(@PathVariable("filingNumber") String filingNumber) {
+        boolean deleted = hearingService.deleteHearing(filingNumber);
+        if (!deleted) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Hearing with filing number " + filingNumber + " not found");
         }
-        hearingRepository.deleteById(id);
-        return ResponseEntity.ok("Hearing with ID" + id + "deleted successfully");
+        return ResponseEntity.ok("Hearing with filing number " + filingNumber + " deleted successfully");
     }
 }

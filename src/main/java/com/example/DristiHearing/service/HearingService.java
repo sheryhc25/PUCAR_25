@@ -1,7 +1,7 @@
 package com.example.DristiHearing.service;
 
-import com.example.DristiHearing.entity.Hearing;
 import com.example.DristiHearing.repository.HearingRepository;
+import com.example.DristiHearing.entity.Hearing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,31 +14,25 @@ public class HearingService {
     @Autowired
     private HearingRepository hearingRepository;
 
-    public List<Hearing> getAllHearings(){
-        return (List<Hearing>) hearingRepository.findAll();
+    public List<Hearing> getAllHearings() {
+        return hearingRepository.findAll();
     }
 
-    public Optional<Hearing> getHearingById(String id){
+    public Optional<Hearing> getHearingById(String id) {
         return hearingRepository.findById(id);
     }
 
-    public Hearing createHearing(Hearing hearing){
-        return hearingRepository.save(hearing);
+    public Hearing createHearing(Hearing hearing) {
+        hearingRepository.insert(hearing);
+        return hearing;
     }
 
-
-    public Hearing updateHearing(String id, Hearing hearing){
-        hearing.setId(id);
-        return hearingRepository.save(hearing);
+    public Hearing updateHearing(String id, Hearing hearing) {
+        hearingRepository.update(id, hearing);
+        return hearing;
     }
 
-
-    public boolean deleteHearing(String id){
-        if(hearingRepository.existsById(id)){
-            hearingRepository.deleteById(id);
-            return  true;
-        }
-        return false;
+    public boolean deleteHearing(String id) {
+        return hearingRepository.delete(id);
     }
-
 }
